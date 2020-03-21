@@ -33,7 +33,7 @@ void setup()
 void draw()
 {
   if (starting_timestamp > 0 && starting_timestamp_printed == false) {
-    String s = String.format("Starting Timestamp: %i", starting_timestamp);
+    String s = "Starting Timestamp: " + str(starting_timestamp);
     text(s, 20, 30);
     println(s);
     starting_timestamp_printed = true;
