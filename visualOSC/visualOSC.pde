@@ -10,7 +10,8 @@ int starting_timestamp = 0;
 boolean starting_timestamp_printed = false;
 float p1, p2, p3, p4;
 boolean updated = false;
-String CSV_PATH = "data/ControlTest10.csv";
+String filename = "log";
+String CSV_PATH = String.format("data/%s.csv", filename);
 
 int listLen = 0;
 // list to store error time stamps
@@ -42,7 +43,8 @@ void setup()
 
   table = new Table();
   
-  table.addColumn("timestamp");
+  table.addColumn("Timestamp");
+  table.addColumn("Error Type");
   table.addColumn("p1");
   table.addColumn("p2");
   table.addColumn("p3");
@@ -91,11 +93,11 @@ void oscEvent(OscMessage theOscMessage) {
       updateErrorTimes(timestamp);
       setCurrentErrorType(p1, p2, p3, p4);
   
-      
       TableRow newRow = table.addRow();
       String timeStr = str(timestamp);
       
-      newRow.setString("timestamp", timeStr);
+      newRow.setString("Timestamp", timeStr);
+      newRow.setString("Error Type", getLastChar(errorTypes[0]));
       newRow.setString("p1", str(p1));
       newRow.setString("p2", str(p2));
       newRow.setString("p3", str(p3));
@@ -154,6 +156,10 @@ void setCurrentErrorType (float p1, float p2, float p3, float p4) {
     errDColor = 200;
     updateErrorTypes(errD);
   }
+}
+
+String getLastChar(String s) {
+  return s.substring(s.length() - 1);
 }
 
 String formatTime (int time) {
