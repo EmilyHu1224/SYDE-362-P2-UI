@@ -6,12 +6,16 @@ OscP5 oscP5;
 NetAddress dest;
 
 Table table;
-int starting_timestamp = 0;
-boolean starting_timestamp_printed = false;
 float p1, p2, p3, p4;
 boolean updated = false;
 String filename = "log";
 String CSV_PATH = String.format("data/%s.csv", filename);
+
+// list of timestamps of failures
+int[] errorTimestamps;
+
+// index of the last displayed timestamp
+int lastDisplayedTimestamp = -1;
 
 int listLen = 0;
 // list to store error time stamps
@@ -54,14 +58,7 @@ void setup()
 }
 
 void draw()
-{
-  if (starting_timestamp > 0 && starting_timestamp_printed == false) {
-    String s = "Starting Timestamp: " +  str(starting_timestamp);
-    text(s, 20, 30);
-    println(s);
-    starting_timestamp_printed = true;
-  }
-  
+{ 
   if (updated) {
     String s = String.format("%.2f, %.2f, %.2f, %.2f", p1, p2, p3, p4);
     text(s, 20, 30);
@@ -76,25 +73,38 @@ void draw()
 //This is called automatically when OSC message is received
 void oscEvent(OscMessage theOscMessage) {
  if (theOscMessage.checkAddrPattern("/sc/outputs")) {
-   starting_timestamp = millis();
-   println(starting_timestamp);
+   if(theOscMessage.checkTypetag("iiiiiiiiii")) {
+      int len = theOscMessage.arguments().length;
+      errorTimestamps = new int[len];
+      for (int i = 0; i < len; i++) {
+        errorTimestamps[i] = theOscMessage.get(i).intValue();
+    }
+    println(errorTimestamps);
+   } else {
+     println("Error: unexpected params type tag received by Processing");
+   }
  } else if (theOscMessage.checkAddrPattern("/wek/outputs")) {
     if(theOscMessage.checkTypetag("ffff")) {
       p1 = theOscMessage.get(0).floatValue();
       p2 = theOscMessage.get(1).floatValue();
       p3 = theOscMessage.get(2).floatValue();
       p4 = theOscMessage.get(3).floatValue();
-      
+
+      // Skip garbage values
+      if (p1 > 100 || p2 > 100 || p3 > 100 || p4 > 100) {
+        return;
+      }
+
       // Update the UI data with the new error
       if (listLen < 20) {
         listLen++;
       }
-      int timestamp = millis() - starting_timestamp;
-      updateErrorTimes(timestamp);
+      
+      updateErrorTimes();
       setCurrentErrorType(p1, p2, p3, p4);
   
       TableRow newRow = table.addRow();
-      String timeStr = str(timestamp);
+      String timeStr = str(errorTimestamps[lastDisplayedTimestamp]);
       
       newRow.setString("Timestamp", timeStr);
       newRow.setString("Error Type", getLastChar(errorTypes[0]));
@@ -112,13 +122,18 @@ void oscEvent(OscMessage theOscMessage) {
  }
 }
 
-void updateErrorTimes (int timestamp) {
+void updateErrorTimes () {
+  if (lastDisplayedTimestamp == errorTimestamps.length) {
+    println("Arrived at the end of the error timestamps!");
+    return;
+  }
+
   if (listLen > 0) {
     for (int i = listLen - 1; i > 0; i--) {
         errorTimes[i] = errorTimes[i - 1];
     }
   }
-  errorTimes[0] = timestamp;
+  errorTimes[0] = errorTimestamps[++lastDisplayedTimestamp];
 } 
 
 void updateErrorTypes (String errType) {
