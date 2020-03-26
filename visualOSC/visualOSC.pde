@@ -73,16 +73,11 @@ void draw()
 //This is called automatically when OSC message is received
 void oscEvent(OscMessage theOscMessage) {
  if (theOscMessage.checkAddrPattern("/sc/outputs")) {
-   if(theOscMessage.checkTypetag("iiiiiiiiii")) {
-      int len = theOscMessage.arguments().length;
-      errorTimestamps = new int[len];
-      for (int i = 0; i < len; i++) {
-        errorTimestamps[i] = theOscMessage.get(i).intValue();
+    int len = theOscMessage.arguments().length;
+    errorTimestamps = new int[len];
+    for (int i = 0; i < len; i++) {
+      errorTimestamps[i] = theOscMessage.get(i).intValue();
     }
-    println(errorTimestamps);
-   } else {
-     println("Error: unexpected params type tag received by Processing");
-   }
  } else if (theOscMessage.checkAddrPattern("/wek/outputs")) {
     if(theOscMessage.checkTypetag("ffff")) {
       p1 = theOscMessage.get(0).floatValue();
